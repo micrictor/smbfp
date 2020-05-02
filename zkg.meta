@@ -1,0 +1,5 @@
+[package]
+description = A package to create a fingerprint of SMB clients
+credits = Michael Torres <mic.ric.tor@gmail.com>
+tags = smb, fingerprint
+script_dir = scripts
