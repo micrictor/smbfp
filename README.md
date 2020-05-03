@@ -8,5 +8,4 @@ This package will generate a fingerprint based upon observed values from the SMB
 
 ## TODO
 
-* Integrate with Intel framework
 * Submit patch to Zeek to include capabilities in smb2_negotiate_request event
