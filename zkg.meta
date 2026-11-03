@@ -1,5 +1,5 @@
 [package]
-description = A package to create a fingerprint of SMB clients
+description = Fingerprints SMB clients from the unencrypted session establishment. SMB1 uses the original smbfp fields, SMB2/3 a seven-feature fingerprint that also works on encrypted SMB3 sessions.
 credits = Michael Torres <mic.ric.tor@gmail.com>
-tags = smb, fingerprint
+tags = smb, smb2, smb3, fingerprint, encryption, ntlm, forensics
 script_dir = scripts

@@ -55,16 +55,6 @@ event  smb1_session_setup_andx_request(c: connection, hdr: SMB1::Header, request
         c$smb_state$tid_map[hdr$tid]$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
-# SMB 2
-# Can only fingerprint off the initial negotiation
-# TODO: Patch Zeek to pass a SMB2::NegotiateContextValues object alongside the dialects
-event smb2_negotiate_request(c: connection, hdr: SMB2::Header, dialects: index_vec) {
-	if (!c$smb_state ?$ smbfp_cl_str)
-                c$smb_state$smbfp_cl_str = to_json(dialects);
-        else
-                c$smb_state$smbfp_cl_str = string_cat(c$smb_state$smbfp_cl_str, ",", to_json(dialects));
-}
-
 # We have to set the client fingerprint field after the tree/file record is actually initialized
 
 event smb1_tree_connect_andx_request(c: connection, hdr: SMB1::Header, path: string, service: string) &priority=4 {
@@ -92,44 +82,61 @@ event smb1_close_request(c: connection, hdr: SMB1::Header, file_id: count) &prio
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
-# SMB2
+# SMB 2 without SMB2 NEGOTIATE
+# A client that starts with the SMB1 multi-protocol negotiate can get SMB 2.002
+# selected directly and continue with SMB2 SESSION_SETUP without ever sending an
+# SMB2 NEGOTIATE. The extended fingerprint needs that request, so these
+# connections fall back to smbfp_cl, built from the SMB1 negotiate dialects.
+# Connections with an SMB2 NEGOTIATE get smbfp_ext only.
+
+redef record SMB::State += {
+	smbfp_smb2_neg: bool &default=F;
+};
+
+event smb2_negotiate_request(c: connection, hdr: SMB2::Header, dialects: index_vec) {
+        c$smb_state$smbfp_smb2_neg = T;
+}
+
+function smb2_fallback(c: connection): bool {
+        return c$smb_state?$smbfp_cl_str && ! c$smb_state$smbfp_smb2_neg;
+}
 
 event smb2_tree_connect_request(c: connection, hdr: SMB2::Header, path: string) &priority=4 {
-	if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_tree$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
-}            
+}
 
 event smb2_create_request(c: connection, hdr: SMB2::Header, request: SMB2::CreateRequest) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_read_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_write_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_file_sattr(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, times: SMB::MACTimes, attrs: SMB2::FileAttrs) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_file_rename(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, dst_filename: string) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_file_delete(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, delete_pending: bool) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
 
 event smb2_close_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID) &priority=4 {
-        if (c$smb_state?$smbfp_cl_str) 
+        if (smb2_fallback(c))
                 c$smb_state$current_file$smbfp_cl = md5_hash(c$smb_state$smbfp_cl_str);
 }
