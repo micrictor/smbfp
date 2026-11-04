@@ -39,43 +39,43 @@ event smb1_close_request(c: connection, hdr: SMB1::Header, file_id: count) &prio
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-# SMB2
-event smb2_tree_connect_request(c: connection, hdr: SMB2::Header, path: string) &priority=4 {
-        if (c$smb_state$current_tree ?$ smbfp_cl) 
+# SMB2 without SMB2 NEGOTIATE (smbfp_cl fallback, set in smbfp.zeek)
+event smb2_tree_connect_request(c: connection, hdr: SMB2::Header, path: string) &priority=3 {
+        if (c$smb_state$current_tree ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_tree$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
-}            
+}
 
-event smb2_create_request(c: connection, hdr: SMB2::Header, request: SMB2::CreateRequest) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_create_request(c: connection, hdr: SMB2::Header, request: SMB2::CreateRequest) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_read_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_read_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_write_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_write_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, offset: count, length: count) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_file_sattr(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, times: SMB::MACTimes, attrs: SMB2::FileAttrs) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_file_sattr(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, times: SMB::MACTimes, attrs: SMB2::FileAttrs) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_file_rename(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, dst_filename: string) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_file_rename(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, dst_filename: string) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_file_delete(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, delete_pending: bool) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_file_delete(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID, delete_pending: bool) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
 
-event smb2_close_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID) &priority=4 {
-        if (c$smb_state$current_file ?$ smbfp_cl) 
+event smb2_close_request(c: connection, hdr: SMB2::Header, file_id: SMB2::GUID) &priority=3 {
+        if (c$smb_state$current_file ?$ smbfp_cl)
 			Intel::seen([$indicator=c$smb_state$current_file$smbfp_cl, $indicator_type=Intel::SMBFP, $conn=c, $where=SMB::IN_FP]);
 }
